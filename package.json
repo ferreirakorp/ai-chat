@@ -1,0 +1,35 @@
+{
+  "name": "ai-chat",
+  "version": "0.1.0",
+  "description": "A drop-in AI chat assistant for React and Next.js: streaming answers, visible reasoning, web search with sources, conversation history, ratings, forms and an admin panel. Runs on Cloudflare Workers AI.",
+  "license": "MIT",
+  "keywords": ["chatbot", "ai-chat", "react", "nextjs", "assistant", "cloudflare-workers-ai", "streaming", "ndjson"],
+  "sideEffects": ["**/*.css"],
+  "exports": {
+    ".": "./src/index.ts",
+    "./nucleo": "./src/nucleo/index.ts",
+    "./nucleo/*": "./src/nucleo/*.ts",
+    "./servidor": "./src/servidor/index.ts",
+    "./admin": "./src/admin/index.ts",
+    "./estilos/*": "./src/estilos/*",
+    "./sql/*": "./src/sql/*"
+  },
+  "files": ["src", "README.md", "LEIAME.md", "LICENSE"],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  }
+}

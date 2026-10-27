@@ -1,0 +1,2501 @@
+/* ==========================================================================
+   O assistente (AssistenteIA): o botão redondo em baixo, à direita, a bolinha amarela (um chamariz, não uma mensagem), o balão do
+   convite e o painel da conversa. CSS autónomo: as cores e o tamanho do texto vêm de variáveis do projecto —
+   --aia-azul (botão, cabeçalho, mensagens), --aia-amarelo (bolinha, estado, hover: cor sólida), --aia-cinza e --aia-tipo — com
+   valores por omissão. Só branco, azul e amarelo. A luz dos botões 3D (a borda, o brilho de cima e o anel) é translúcida em branco:
+   --aia-luz-borda (0.4), --aia-luz (0.45) e --aia-luz-anel (0.35) mudam-se se o fundo for escuro e o aro ficar cinzento. No telemóvel o painel ocupa o ecrã todo.
+   ========================================================================== */
+.aia {
+  --chat-azul: var(--aia-azul);
+  --chat-amarelo: var(--aia-amarelo);
+  --chat-cinza: var(--aia-cinza);
+  --chat-fundo-bot: color-mix(in srgb, var(--chat-azul) 7%, var(--chat-branco));
+  /* o azul bebé (diluído, quase transparente) do preenchimento dos blocos clicáveis dentro do texto: as páginas do site e as opções */
+  --chat-azul-bebe: var(--aia-azul-bebe);
+  --chat-azul-bebe-forte: var(--aia-azul-bebe-forte);
+  --chat-linha: color-mix(in srgb, var(--chat-azul) 16%, var(--chat-branco));
+  /* o relevo dos botões 3D do site (um anel claro, luz interior e duas sombras suaves) e o vermelho do X e do apagar */
+  --chat-relevo:
+    inset 0 0 0 1px var(--aia-luz-anel, rgb(255 255 255 / 0.35)),
+    inset 0 1px 2px var(--aia-luz, rgb(255 255 255 / 0.45)), 0 3px 3px -1.5px rgb(16 24 40 / 0.06),
+    0 1px 1px rgb(16 24 40 / 0.08);
+  --chat-vermelho: var(--aia-vermelho);
+  --chat-vermelho-forte: var(--aia-vermelho-forte);
+  --chat-branco: var(--aia-branco);
+  --chat-margem: max(1rem, env(safe-area-inset-right));
+  --chat-baixo: max(1rem, env(safe-area-inset-bottom));
+  position: fixed;
+  right: var(--chat-margem);
+  bottom: var(--chat-baixo);
+  z-index: 52;
+  font-family: inherit;
+  font-size: var(--aia-tipo, 0.9375rem);
+  line-height: 1.45;
+  color: var(--chat-azul);
+  transition:
+    bottom 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 0.35s ease,
+    visibility 0s;
+}
+/* aberto, o chat fica por cima de tudo (aviso de cookies z 55, menu z 60, interruptor z 70): no telemóvel ocupa o ecrã todo e, em janelas baixas,
+   sobrepõe-se ao aviso de cookies em vez de ficar espremido por cima dele */
+.aia[data-aberto="sim"] {
+  z-index: 80;
+}
+@media (max-height: 51.99rem) {
+  .aia[data-aberto="sim"] {
+    --chat-baixo: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+@media print {
+  .aia {
+    display: none;
+  }
+}
+
+/* ─── o botão ─── */
+.aia-botao {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
+  border: 1px solid var(--aia-luz-borda, rgb(255 255 255 / 0.4));
+  border-radius: 9999px;
+  background: var(--chat-azul);
+  color: var(--chat-branco);
+  cursor: pointer;
+  box-shadow: inset 0 1px 2px var(--aia-luz, rgb(255 255 255 / 0.45));
+  transform: translateY(0.75rem) scale(0.6);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.4s ease,
+    visibility 0s linear 0.55s,
+    background-color 0.15s ease-out,
+    color 0.15s ease-out;
+}
+.aia[data-pronto="sim"] .aia-botao {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.4s ease,
+    visibility 0s,
+    background-color 0.15s ease-out,
+    color 0.15s ease-out;
+}
+@media (hover: hover) {
+  .aia-botao:hover {
+    background: var(--chat-amarelo);
+    color: var(--chat-azul);
+  }
+}
+.aia-botao:active {
+  transform: scale(0.94);
+}
+.aia-botao:focus-visible,
+.aia-fechar:focus-visible,
+.aia-sugestao:focus-visible,
+.aia-chamada:focus-visible,
+.aia-enviar:focus-visible,
+.aia-convite-texto:focus-visible,
+.aia-convite-fechar:focus-visible {
+  outline: 2px solid var(--chat-azul);
+  outline-offset: 2px;
+}
+.aia-botao:focus-visible {
+  outline-color: var(--chat-amarelo);
+}
+
+/* com o painel aberto o botão sai de cena (em todos os ecrãs): o painel só fecha com o X do seu cabeçalho */
+.aia[data-aberto="sim"] .aia-botao {
+  transform: scale(0.6);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 0.25s ease,
+    visibility 0s linear 0.3s;
+}
+
+/* a bolinha de notificação: há mensagem por ler. Só a bola (VERDE, a do «online» do assistente, parada): nada a pulsar. */
+.aia-ponto {
+  position: absolute;
+  top: 0.05rem;
+  right: 0.05rem;
+  box-sizing: border-box;
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid var(--chat-branco);
+  border-radius: 9999px;
+  background: var(--aia-verde, #00f700);
+}
+
+/* ─── o convite (o balão que o assistente mostra com o chat fechado) ─── */
+.aia-convite {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.75rem);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  width: min(17.5rem, calc(100vw - 2 * var(--chat-margem)));
+  padding: 0.25rem 0.25rem 0.25rem 0;
+  border: 1px solid var(--chat-linha);
+  border-radius: 1.1rem 1.1rem 0.3rem 1.1rem;
+  background: var(--chat-branco);
+  transform: translateY(0.6rem) scale(0.96);
+  transform-origin: bottom right;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s ease,
+    visibility 0s linear 0.45s;
+}
+.aia-convite[data-visivel="sim"] {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s ease,
+    visibility 0s;
+}
+/* a resposta final com o chat fechado: «I.A. Resposta:» (ou o nome de quem responde) e o princípio do texto, em DUAS linhas; o fim da
+   segunda esbate-se */
+.aia-previa {
+  position: relative;
+  display: block;
+  max-height: 2.8em;
+  overflow: hidden;
+  line-height: 1.4;
+}
+.aia-previa::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 45%;
+  height: 1.4em;
+  background: linear-gradient(to right, rgb(255 255 255 / 0), var(--chat-branco) 85%);
+  pointer-events: none;
+}
+.aia-previa-quem {
+  font-weight: 800;
+}
+/* com o chat fechado e o assistente a trabalhar, o botão azul NÃO pisca: só o loading dos quadrados (a pensar e a pesquisar) e o lápis (a
+   escrever a resposta final) mexem */
+.aia-botao-carregar {
+  display: grid;
+  place-items: center;
+}
+.aia-botao-carregar .aia-carregar-grelha {
+  width: 1.5rem;
+  height: 1.5rem;
+  gap: 2px;
+}
+.aia-botao-forma {
+  display: grid;
+  place-items: center;
+}
+.aia-botao-forma > svg {
+  transform-origin: 20% 90%;
+  animation: aia-lapis 1.1s ease-in-out infinite;
+}
+.aia-convite-texto {
+  display: grid;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.7rem 0.25rem 0.7rem 0.9rem;
+  border: 0;
+  background: none;
+  color: var(--chat-azul);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+.aia-convite-fechar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: 0.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: var(--chat-azul);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-out,
+    color 0.15s ease-out;
+}
+@media (hover: hover) {
+  .aia-convite-fechar:hover {
+    background: var(--chat-amarelo);
+  }
+}
+
+/* ─── o painel ─── */
+/* no PC fica no mesmo canto onde o botão estava (o botão sai de cena quando o painel abre), sem subir para o meio do ecrã */
+.aia-painel {
+  position: fixed;
+  right: var(--chat-margem);
+  bottom: var(--chat-baixo);
+  display: flex;
+  flex-direction: column;
+  width: min(24rem, calc(100vw - 2 * var(--chat-margem)));
+  /* nunca mais baixo do que 14 rem (uma janela baixa não o espreme) e, quando há espaço, não chega ao cabeçalho do site (4,5 rem + folga) */
+  height: clamp(14rem, calc(100dvh - var(--chat-baixo) - 6.5rem), 36rem);
+  overflow: hidden;
+  border: 1px solid var(--chat-linha);
+  border-radius: 1.25rem;
+  background: var(--chat-branco);
+  transform: translateY(1rem) scale(0.97);
+  transform-origin: bottom right;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.3s ease,
+    visibility 0s linear 0.4s,
+    bottom 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.aia[data-aberto="sim"] .aia-painel {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.3s ease,
+    visibility 0s,
+    bottom 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.aia-cabeca {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  /* o fundo é branco e esbate-se em baixo: a conversa passa por baixo e desvanece-se, sem nenhum corte */
+  padding: 0.75rem 0.6rem 1.6rem 1rem;
+  background: linear-gradient(
+    to bottom,
+    var(--chat-branco) 0,
+    var(--chat-branco) calc(100% - 1.6rem),
+    rgb(255 255 255 / 0) 100%
+  );
+  color: var(--chat-azul);
+  /* a zona do esbatido deixa passar os toques e a roda do rato para a conversa; só os botões e o nome apanham */
+  pointer-events: none;
+}
+.aia-cabeca > * {
+  pointer-events: auto;
+}
+/* o avatar do assistente: a fotografia que a equipa põe no painel ou, sem ela, o cinzento 3D (degradé que escurece em baixo) com a
+   silhueta branca — o mesmo de quem não tem fotografia de perfil nas bolas da hero */
+.aia-avatar {
+  position: relative;
+  flex: none;
+  display: block;
+  width: 2.5rem;
+  height: 2.5rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--chat-branco);
+}
+.aia-avatar-3d {
+  border: 1px solid var(--aia-luz-borda, rgb(255 255 255 / 0.4));
+  background: linear-gradient(180deg, var(--aia-silhueta-1) 0%, var(--aia-silhueta-2) 50%, var(--aia-silhueta-3) 100%);
+  background-origin: border-box;
+  box-shadow:
+    inset 0 1px 2px var(--aia-luz, rgb(255 255 255 / 0.45)),
+    0 3px 3px -1.5px rgb(16 24 40 / 0.06),
+    0 1px 1px rgb(16 24 40 / 0.08);
+}
+.aia-silhueta {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: var(--chat-branco);
+  clip-path: circle(41% at 50% 50%);
+}
+.aia-quem {
+  display: grid;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+}
+.aia-quem strong {
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.aia-fechar,
+.aia-menu-botao {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: var(--chat-azul);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-out,
+    color 0.15s ease-out;
+}
+@media (hover: hover) {
+  .aia-fechar:hover,
+  .aia-menu-botao:hover {
+    background: var(--chat-amarelo);
+  }
+}
+.aia-menu-botao[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--chat-azul) 9%, var(--chat-branco));
+}
+
+/* ─── a conversa ─── */
+/* a conversa sobe DE BAIXO: com poucas mensagens ficam encostadas à escrita (o espaço vazio fica por cima) e cada mensagem nova empurra
+   as anteriores para cima. A margem automática no primeiro elemento faz isto sem estragar a rolagem (justify-content: flex-end perdia o topo).
+   Sem retenção de rolagem: quando a conversa chega ao fim a roda do rato segue para a página. Puxar (dedo ou rato) para a esquerda mostra a
+   hora do que a pessoa escreveu e para a direita a fotografia e a hora do assistente (--arrasto, posto pelo componente); na vertical a
+   rolagem é a normal (touch-action: pan-y). */
+.aia-lista {
+  --arrasto: 0px;
+  --revelar-esq: 0;
+  --revelar-dir: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.7rem;
+  /* por baixo, espaço para a última hora (que fica por baixo da mensagem) ficar acima do esbatido da escrita */
+  padding: 4.85rem 1rem 2.6rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--chat-azul) 35%, var(--chat-branco)) transparent;
+  background: var(--chat-branco);
+}
+.aia-lista[data-arrastando] {
+  user-select: none;
+}
+.aia-lista > :first-child {
+  margin-top: auto;
+}
+.aia-lista:focus-visible {
+  outline: 2px solid var(--chat-azul);
+  outline-offset: -2px;
+}
+/* o aviso (a IA pode errar; as mensagens são tratadas pela Cloudflare) é a primeira coisa DENTRO da conversa, pequena e ao centro */
+.aia-aviso {
+  margin: 0 0.25rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--chat-cinza);
+}
+
+/* puxar a conversa: para a ESQUERDA desliza o que a pessoa escreveu e mostra a hora, por baixo da mensagem e encostada a ela; para a DIREITA
+   desliza o que o assistente escreveu e mostra a fotografia dele, no canto de baixo da resposta, e a hora dela, por baixo. Cada lado só
+   mexe nas mensagens que lhe pertencem (--arrasto tem sinal; --revelar-esq e --revelar-dir vão de 0 a 1 e são postos pelo componente). */
+.aia-linha {
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.aia-linha[data-de="eu"] {
+  align-self: flex-end;
+  max-width: 88%;
+  transform: translateX(min(0px, var(--arrasto)));
+}
+.aia-linha[data-de="bot"] {
+  transform: translateX(max(0px, var(--arrasto)));
+}
+.aia-lista[data-arrastando] .aia-linha {
+  transition: none;
+}
+.aia-linha > :not(.aia-detalhe) + :not(.aia-detalhe) {
+  margin-top: 0.5rem;
+}
+/* a resposta do assistente (o texto, as listas e os botões): é a ela que a fotografia se prende, no canto de baixo */
+.aia-msg {
+  position: relative;
+}
+.aia-msg > :not(.aia-foto) + :not(.aia-foto) {
+  margin-top: 0.5rem;
+}
+.aia-foto {
+  position: absolute;
+  right: calc(100% + 0.45rem);
+  bottom: 0;
+  display: flex;
+  opacity: var(--revelar-dir);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.aia-foto .aia-avatar {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+/* a hora: logo por baixo da mensagem (no intervalo entre mensagens), à direita na da pessoa e à esquerda na do assistente */
+.aia-detalhe {
+  position: absolute;
+  top: 100%;
+  margin-top: 0.4rem;
+  color: var(--chat-cinza);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.aia-linha[data-de="eu"] .aia-detalhe {
+  right: 0.25rem;
+  opacity: var(--revelar-esq);
+}
+.aia-linha[data-de="bot"] .aia-detalhe {
+  left: 0;
+  opacity: var(--revelar-dir);
+}
+.aia-lista[data-arrastando] .aia-foto,
+.aia-lista[data-arrastando] .aia-detalhe {
+  transition: none;
+}
+
+/* as respostas do assistente: texto solto, sem caixa à volta. O texto principal é normal (peso 500); o que importa vai a negrito (700) */
+.aia-bot {
+  margin: 0;
+  color: var(--chat-azul);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  animation: aia-msg-entra 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.aia-bot strong {
+  font-weight: 700;
+}
+.aia-bot code {
+  padding: 0.08em 0.4em;
+  border-radius: 0.4em;
+  background: color-mix(in srgb, var(--chat-azul) 9%, var(--chat-branco));
+  font-family: var(--aia-fonte-codigo, monospace);
+  font-size: 0.88em;
+  font-weight: 600;
+}
+/* as fontes de uma pesquisa na web: uma bola numerada a seguir ao texto e, num facto tirado da pesquisa, o texto a tracejado e esbatido.
+   Clicar abre o raciocinio na fonte (o detalhe completo da pesquisa esta la). */
+.aia-bot .aia-fonte-texto {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: color-mix(in srgb, var(--chat-azul) 78%, var(--chat-branco));
+  font: inherit;
+  text-decoration: underline dashed;
+  text-decoration-color: color-mix(in srgb, var(--chat-azul) 48%, var(--chat-branco));
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.1em;
+  cursor: pointer;
+  transition: color 0.15s ease-out;
+}
+.aia-bot .aia-fonte-bola {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 1.15em;
+  height: 1.15em;
+  margin: 0 0.12em 0 0.3em;
+  padding: 0;
+  border: 1px solid var(--aia-luz-borda, rgb(255 255 255 / 0.4));
+  border-radius: 9999px;
+  background: var(--chat-azul);
+  box-shadow:
+    inset 0 1px 1px var(--aia-luz, rgb(255 255 255 / 0.45)),
+    inset 0 -1px 1px rgb(0 0 0 / 0.22),
+    0 1px 2px rgb(16 24 40 / 0.2);
+  color: var(--chat-branco);
+  font: inherit;
+  font-size: 0.68em;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  vertical-align: 0.18em;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-out,
+    color 0.15s ease-out;
+}
+/* a area de toque da bola e maior do que ela (no telemovel o dedo nao acerta numa bola tao pequena) */
+.aia-bot .aia-fonte-bola::after {
+  content: "";
+  position: absolute;
+  inset: -0.5em;
+}
+@media (hover: hover) {
+  .aia-bot .aia-fonte-texto:hover {
+    color: var(--chat-azul);
+    /* a linha continua a tracejado, mas ganha cor (o azul inteiro) */
+    text-decoration-color: var(--chat-azul);
+  }
+  .aia-bot .aia-fonte-bola:hover {
+    background: var(--chat-amarelo);
+    color: var(--chat-azul);
+  }
+}
+.aia-bot .aia-fonte-texto:focus-visible,
+.aia-bot .aia-fonte-bola:focus-visible {
+  outline: 2px solid var(--chat-azul);
+  outline-offset: 2px;
+}
+.aia-bot a {
+  font-weight: 700;
+  color: inherit;
+  text-decoration: underline dashed;
+  text-decoration-color: var(--chat-azul);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.1em;
+}
+/* o ícone do que a ligação abre (telefone, e-mail, globo, vídeo, mapa…) no fim, colado à última palavra (não fica sozinho na linha
+   seguinte); um número de telefone não se parte */
+.aia-bot .aia-ligacao-fim,
+.aia-bot .aia-ligacao[data-tipo="telefone"] {
+  white-space: nowrap;
+}
+.aia-ligacao-icone {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  margin-left: 0.3em;
+  vertical-align: -0.08em;
+  stroke-width: 2.4;
+}
+/* uma página do site é um clicável dentro do texto: só o preenchimento azul bebé, num rectângulo de cantos ligeiramente redondos */
+.aia-bot a.aia-ligacao-pagina {
+  padding: 0.08em 0.5em;
+  border-radius: 0.4em;
+  background: var(--chat-azul-bebe);
+  color: var(--chat-azul);
+  font-weight: 700;
+  text-decoration: underline dashed;
+  text-decoration-color: var(--chat-azul);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.12em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-color 0.15s ease-out;
+}
+@media (hover: hover) {
+  .aia-bot a.aia-ligacao-pagina:hover {
+    background: var(--chat-azul-bebe-forte);
+  }
+}
+/* as opções de um clique no fim de uma resposta: bullets com a pergunta como clicável (o mesmo preenchimento azul bebé das páginas) */
+.aia-bot + .aia-opcoes,
+.aia-opcoes {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.1rem 0 0;
+  padding-left: 1.3rem;
+  list-style: disc;
+  color: var(--chat-azul);
+}
+.aia-opcao-rapida {
+  appearance: none;
+  padding: 0.1em 0.5em;
+  border: 0;
+  border-radius: 0.4em;
+  background: var(--chat-azul-bebe);
+  color: var(--chat-azul);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
+  text-decoration: underline dashed;
+  text-decoration-color: var(--chat-azul);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.12em;
+  cursor: pointer;
+  transition: background-color 0.15s ease-out;
+}
+@media (hover: hover) {
+  .aia-opcao-rapida:not(:disabled):hover {
+    background: var(--chat-azul-bebe-forte);
+  }
+}
+.aia-opcao-rapida:not(:disabled):active {
+  transform: scale(0.98);
+}
+.aia-opcao-rapida:focus-visible {
+  outline: 2px solid var(--chat-azul);
+  outline-offset: 2px;
+}
+.aia-opcao-rapida:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+/* a seta que desliza para dentro ao passar o rato, no fim dos clicáveis dentro do texto (o facto de uma fonte, a página do site e as opções de
+   um clique): um círculo azul com a seta branca que cresce da esquerda; sem o rato (telemóvel) não aparece */
+.aia {
+  --chat-seta: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E");
+}
+.aia-bot .aia-fonte-texto::after,
+.aia-bot a.aia-ligacao-pagina::after,
+.aia-opcao-rapida::after {
+  content: "";
+  display: inline-block;
+  box-sizing: border-box;
+  width: 0;
+  height: 1.05em;
+  margin-left: 0;
+  border-radius: 9999px;
+  background:
+    var(--chat-seta) center / 62% no-repeat,
+    var(--chat-azul);
+  box-shadow:
+    inset 0 0 0 1px var(--aia-luz-anel, rgb(255 255 255 / 0.35)),
+    inset 0 1px 2px var(--aia-luz, rgb(255 255 255 / 0.45));
+  opacity: 0;
+  transform: translateX(-0.5em);
+  vertical-align: -0.2em;
+  transition:
+    width 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    margin-left 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.18s ease-out,
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (hover: hover) {
+  .aia-bot .aia-fonte-texto:hover::after,
+  .aia-bot a.aia-ligacao-pagina:hover::after,
+  .aia-opcao-rapida:not(:disabled):hover::after {
+    width: 1.05em;
+    margin-left: 0.3em;
+    opacity: 1;
+    transform: none;
+  }
+}
+.aia-itens {
+  padding-left: 1.3rem;
+}
+ul.aia-itens {
+  list-style: disc;
+}
+ol.aia-itens {
+  list-style: decimal;
+}
+.aia-itens li + li {
+  margin-top: 0.3rem;
+}
+.aia-itens li::marker {
+  color: var(--chat-azul);
+}
+/* o botão de acção que a resposta pede: o botão 3D do site (relevo, seta que anima e hover amarelo), mais baixo para caber na conversa */
+.aia-acao {
+  margin: 0;
+}
+.aia-acao .aia-botao-3d {
+  min-width: 0;
+  height: 2.5rem;
+  padding-inline: 1.15rem;
+  gap: 0.55rem;
+  font-size: inherit;
+}
+/* o que a pessoa escreve fica numa bolha à direita, SEM preenchimento: só o contorno azul-marinho */
+.aia-eu {
+  margin: 0;
+  padding: 0.55rem 0.9rem;
+  border: 1.5px solid var(--chat-azul);
+  border-radius: 1.1rem 1.1rem 0.3rem 1.1rem;
+  background: none;
+  color: var(--chat-azul);
+  font-weight: 500;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  animation: aia-msg-entra 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes aia-msg-entra {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem);
+  }
+}
+
+/* a autorização para guardar a conversa: uma pergunta simples com os dois botões, dentro da conversa */
+.aia-consentimento p {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--chat-cinza);
+}
+.aia-consentimento-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* «a escrever…» (e «a pesquisar na web…»): três pontos a saltar */
+.aia-escreve {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 1.2rem;
+  vertical-align: middle;
+}
+.aia-escreve i {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+  background: var(--chat-azul);
+  animation: aia-ponto-salta 1.1s ease-in-out infinite;
+}
+.aia-escreve i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.aia-escreve i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.aia-pesquisa {
+  margin-left: 0.6rem;
+  color: var(--chat-cinza);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+@keyframes aia-ponto-salta {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-0.35rem);
+  }
+}
+
+/* as perguntas sugeridas (e a ligação para a equipa): pílulas LADO A LADO numa faixa que se desliza para o lado (dedo, roda do rato na
+   horizontal ou arrastar), por cima da escrita e SEM linha a separá-la; ao pairar ficam amarelas, como o botão CTA. A faixa abre e fecha
+   sem salto (altura de 0 ao conteúdo). Não retém a roda vertical nem a rolagem: só desliza para o lado quando se puxa para o lado. */
+.aia-faixa {
+  flex: none;
+  display: grid;
+  grid-template-rows: 0fr;
+  background: var(--chat-branco);
+  transition: grid-template-rows 0.3s ease;
+}
+.aia-faixa[data-ativo="sim"] {
+  grid-template-rows: 1fr;
+}
+.aia-faixa-interior {
+  min-height: 0;
+  overflow: hidden;
+}
+.aia-sugestoes {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem 0.3rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 1rem;
+  scrollbar-width: none;
+  cursor: grab;
+  -webkit-overflow-scrolling: touch;
+  mask-image: linear-gradient(90deg, transparent 0, black 0.75rem, black calc(100% - 1.5rem), transparent 100%);
+}
+.aia-sugestoes::-webkit-scrollbar {
+  display: none;
+}
+.aia-sugestao,
+.aia-chamada {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--chat-azul) 45%, var(--chat-branco));
+  border-radius: 9999px;
+  background: var(--chat-branco);
+  color: var(--chat-azul);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+  white-space: nowrap;
+  scroll-snap-align: start;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-out,
+    border-color 0.15s ease-out,
+    color 0.15s ease-out,
+    transform 0.15s ease-out;
+}
+.aia-chamada {
+  border-color: var(--aia-luz-borda, rgb(255 255 255 / 0.4));
+  background: var(--chat-azul);
+  box-shadow: var(--chat-relevo);
+  color: var(--chat-branco);
+}
+.aia-sugestao:active,
+.aia-chamada:active {
+  transform: scale(0.97);
+}
+
+/* ─── a escrita ─── */
+.aia-rodape {
+  flex: none;
+  padding: 0.1rem 0.9rem 0.9rem;
+  background: var(--chat-branco);
+}
+.aia-escrita {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.3rem 0.3rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--chat-azul) 30%, var(--chat-branco));
+  border-radius: 9999px;
+  background: var(--chat-branco);
+  transition: border-color 0.15s ease-out;
+}
+.aia-escrita:focus-within {
+  border-color: var(--chat-azul);
+}
+.aia-escrita input {
+  flex: 1;
+  min-width: 0;
+  height: 2.25rem;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--chat-azul);
+  font: inherit;
+  /* o que a pessoa escreve tem peso (não pode ficar fino): 600, e o texto de ajuda 500 */
+  font-weight: 600;
+  /* 16 px no telemóvel para o iOS não aproximar o ecrã ao escrever */
+  font-size: max(1rem, var(--aia-tipo, 0.9375rem));
+}
+.aia-escrita input::placeholder {
+  color: var(--chat-cinza);
+  font-weight: 500;
+}
+.aia-enviar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  box-sizing: border-box;
+  padding: 0;
+  /* 3D, na receita dos botões 3D do site: borda clara, luz interior e duas sombras suaves */
+  border: 1px solid var(--aia-luz-borda, rgb(255 255 255 / 0.4));
+  border-radius: 9999px;
+  background: var(--chat-azul);
+  box-shadow:
+    inset 0 1px 2px var(--aia-luz, rgb(255 255 255 / 0.45)),
+    0 3px 3px -1.5px rgb(16 24 40 / 0.06),
+    0 1px 1px rgb(16 24 40 / 0.08);
+  color: var(--chat-branco);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-out,
+    color 0.15s ease-out,
+    transform 0.15s ease-out;
+}
+/* sem nada escrito o botão fica chapado e apagado (não há nada para enviar) */
+.aia-enviar:disabled {
+  border-color: transparent;
+  background: var(--chat-fundo-bot);
+  box-shadow: none;
+  color: color-mix(in srgb, var(--chat-azul) 45%, var(--chat-branco));
+  cursor: default;
+}
+@media (hover: hover) {
+  .aia-enviar:not(:disabled):hover {
+    background: var(--chat-amarelo);
+    color: var(--chat-azul);
+  }
+}
+.aia-enviar:not(:disabled):active {
+  transform: scale(0.92);
+}
+
+/* ─── telemóvel: o painel é o ecrã todo (a altura e o topo seguem a parte visível, para o teclado não o tapar) ─── */
+@media (max-width: 39.99rem) {
+  .aia-painel {
+    inset: 0;
+    width: auto;
+    height: auto;
+    border: 0;
+    border-radius: 0;
+    transform: translateY(1.5rem);
+    transform-origin: bottom center;
+  }
+  .aia[data-aberto="sim"] .aia-painel {
+    transform: none;
+  }
+  .aia-cabeca {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+  }
+  .aia-rodape {
+    padding-bottom: max(0.7rem, env(safe-area-inset-bottom));
+  }
+  /* ao escrever uma avaliação, tudo o que não é dela esconde-se (as perguntas prontas e a escrita das mensagens): só ela e o teclado */
+  .aia-painel[data-escrita="avaliacao"] .aia-base {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aia,
+  .aia-botao,
+  .aia-convite,
+  .aia-painel,
+  .aia-faixa {
+    transition-duration: 0.01ms;
+    transition-delay: 0s;
+  }
+  .aia-linha {
+    transition: none;
+  }
+  .aia-bot,
+  .aia-eu,
+  .aia-escreve i {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   Peças do módulo que não vêm do site: ícones, texto só para leitores de ecrã, botão 3D, a autorização (os dois botões no espaço de baixo),
+   o raciocínio («A pensar…» / «Pensou durante N s»), a avaliação das respostas e os formulários.
+   ========================================================================== */
+/* os ícones têm o peso do texto a negrito ao lado: o traço dos SVG engrossa com o tamanho (≈1,8 px sempre) e o X (feito de traços,
+   como o hambúrguer) usa a mesma espessura em --_esp */
+.aia-icone-pequeno {
+  --_esp: 0.15rem;
+  width: 1rem;
+  height: 1rem;
+  stroke-width: 2.7;
+}
+.aia-icone-medio {
+  --_esp: 0.17rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke-width: 2.5;
+}
+.aia-icone-grande {
+  --_esp: 0.2rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  stroke-width: 2.3;
+}
+.aia-xis {
+  position: relative;
+  display: block;
+}
+.aia-xis::before,
+.aia-xis::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 82%;
+  height: var(--_esp, 0.17rem);
+  background: currentColor;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.aia-xis::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+.aia-icone-seta {
+  width: 1.1em;
+  height: 1.1em;
+}
+.aia-so-leitores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* o botão 3D das respostas (e de qualquer acção): pílula azul com luz interior e uma seta que anima ao pairar */
+.aia-botao-3d {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  height: 3rem;
+  gap: 0.7rem;
+  min-width: min(100%, 19rem);
+  padding: 0 2rem;
+  border: 1px solid var(--aia-luz-borda, rgb(255 255 255 / 0.4));
+  border-radius: 9999px;
+  background: var(--chat-azul);
+  color: var(--chat-branco);
+  font-size: var(--aia-tipo, 0.9375rem);
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 2px var(--aia-luz, rgb(255 255 255 / 0.45)),
+    0 3px 3px -1.5px rgb(16 24 40 / 0.06),
+    0 1px 1px rgb(16 24 40 / 0.08);
+  transition: all 0.15s ease-out;
+}
+@media (hover: hover) {
+  .aia-botao-3d:hover {
+    background: var(--chat-amarelo);
+    color: var(--chat-azul);
+  }
+}
+.aia-botao-3d:active {
+  transform: scale(0.95);
+}
+.aia-botao-3d:focus-visible {
+  outline: 2px solid var(--chat-azul);
+  outline-offset: 2px;
+}
+.aia-botao-seta {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 1.1em;
+  height: 1.1em;
+  overflow: hidden;
+}
+.aia-botao-seta > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.aia-botao-seta > svg:last-child {
+  transform: translate(-110%, 110%);
+}
+@media (hover: hover) {
+  .aia-botao-3d:hover .aia-botao-seta > svg:first-child {
+    transform: translate(110%, -110%);
+  }
+  .aia-botao-3d:hover .aia-botao-seta > svg:last-child {
+    transform: none;
+  }
+}
+.aia-botao-3d:focus-visible .aia-botao-seta > svg:first-child {
+  transform: translate(110%, -110%);
+}
+.aia-botao-3d:focus-visible .aia-botao-seta > svg:last-child {
+  transform: none;
+}
+
+/* ─── a autorização para guardar a conversa: os dois botões ocupam o espaço de baixo (onde estão as perguntas sugeridas), o Autorizo em
+   amarelo e em destaque, o Não autorizo só com o contorno ─── */
+.aia-autorizar {
+  flex: none;
+  display: grid;
+  grid-template-rows: 0fr;
+  background: var(--chat-branco);
+  transition: grid-template-rows 0.3s ease;
+}
+.aia-autorizar[data-ativo="sim"] {
+  grid-template-rows: 1fr;
+}
+.aia-autorizar-interior {
+  min-height: 0;
+  overflow: hidden;
+}
+.aia-autorizar-botoes {
+  display: grid;
+  grid-template-columns: 1fr 3.1rem;
+  gap: 0.6rem;
+  padding: 0.35rem 1rem 0.8rem;
+}
+.aia-autorizo,
+.aia-nao-autorizo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.1rem;
+  padding: 0 1rem;
+  border-radius: 9999px;
+  font: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-out,
+    color 0.15s ease-out,
+    border-color 0.15s ease-out;
+}
+/* os dois botões são 3D, na receita dos botões 3D do site (borda clara, luz interior, duas sombras suaves) e sem se mexerem ao pairar:
+   o Autorizo é azul com o texto; o Não autorizo é vermelho só com o X */
+.aia-autorizo,
+.aia-nao-autorizo {
+  border: 1px solid var(--aia-luz-borda, rgb(255 255 255 / 0.4));
+  color: var(--chat-branco);
+  box-shadow:
+    inset 0 1px 2px var(--aia-luz, rgb(255 255 255 / 0.45)),
+    0 3px 3px -1.5px rgb(16 24 40 / 0.06),
+    0 1px 1px rgb(16 24 40 / 0.08);
+}
+.aia-autorizo {
+  background: var(--chat-azul);
+  font-size: 1.05em;
+  font-weight: 700;
+}
+/* o X é um círculo a sério: a mesma largura e altura (a do Autorizo), sem enchimento */
+.aia-nao-autorizo {
+  width: 3.1rem;
+  height: 3.1rem;
+  padding: 0;
+  background: var(--chat-vermelho);
+}
+@media (hover: hover) {
+  .aia-autorizo:hover {
+    background: var(--chat-amarelo);
+    color: var(--chat-azul);
+  }
+  .aia-nao-autorizo:hover {
+    background: var(--chat-vermelho-forte);
+  }
+}
+.aia-autorizo:active,
+.aia-nao-autorizo:active {
+  transform: scale(0.97);
+}
+.aia-autorizo:focus-visible,
+.aia-nao-autorizo:focus-visible {
+  outline: 2px solid var(--chat-azul);
+  outline-offset: 2px;
+}
+
+/* ─── o raciocínio: «A pensar…» com brilho e as frases dos passos a aparecer (as últimas, com um esbatido em cima); depois «Pensou durante
+   N s» e, se a pessoa abrir, a cadeia de pensamento ─── */
+.aia-pensa {
+  margin: 0;
+  color: var(--chat-cinza);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  animation: aia-msg-entra 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.aia-pensa-linha {
+  margin: 0;
+}
+.aia-pensa-cabeca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--chat-cinza);
+  font: inherit;
+  font-weight: 500;
+}
+.aia-pensa-clicavel {
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .aia-pensa-clicavel:hover {
+    color: var(--chat-azul);
+  }
+}
+.aia-pensa-clicavel:focus-visible {
+  border-radius: 0.3rem;
+  outline: 2px solid var(--chat-azul);
+  outline-offset: 3px;
+}
+.aia-pensa-verbo {
+  color: var(--chat-azul);
+  font-weight: 700;
+}
+/* a seta aponta para a frente (›) e, ao abrir, só desce um quarto de volta (aponta para baixo): nunca dá a volta toda */
+.aia-pensa-seta {
+  width: 0.8rem;
+  height: 0.8rem;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.aia-pensa-clicavel[aria-expanded="true"] .aia-pensa-seta {
+  transform: rotate(90deg);
+}
+.aia-pensa-brilho {
+  background: linear-gradient(90deg, var(--chat-cinza) 0 40%, var(--chat-azul) 50%, var(--chat-cinza) 60% 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 600;
+  animation: aia-pensa-brilho 2s ease-in-out infinite;
+}
+@keyframes aia-pensa-brilho {
+  0%,
+  18% {
+    background-position: 100% 0;
+  }
+  82%,
+  100% {
+    background-position: 0 0;
+  }
+}
+.aia-pensa-janela {
+  margin-top: 0.4rem;
+  overflow: hidden;
+  transition:
+    height 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    margin-top 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.25s ease;
+}
+/* escondidas, os passos recolhem-se por completo (também a margem) */
+.aia-pensa-janela[data-aberto="nao"] {
+  margin-top: 0;
+  opacity: 0;
+}
+/* o ícone do que o assistente está a fazer: à vista sempre, com o raciocínio escondido ou aberto; o chevron fica à frente dele */
+.aia-pensa-icone {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 1.1rem;
+  margin-left: 0.1rem;
+  color: var(--chat-azul);
+}
+.aia-pensa-icone-forma {
+  display: grid;
+  place-items: center;
+  animation: aia-icone-entra 0.3s ease both;
+}
+.aia-pensa-icone-forma > svg {
+  stroke-width: 2.2;
+}
+@keyframes aia-icone-entra {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+/* o cérebro e o globo não têm animação própria: só o brilho do texto («A pensar…») passa também por eles, com o mesmo ritmo (2 s) e
+   chegando-lhes no fim da passagem, que é onde eles estão; o lápis escreve */
+.aia-pensa-icone-forma[data-forma="cerebro"] > svg,
+.aia-pensa-icone-forma[data-forma="globo"] > svg {
+  color: var(--chat-cinza);
+  animation: aia-brilho-do-icone 2s ease-in-out infinite;
+}
+@keyframes aia-brilho-do-icone {
+  0%,
+  60% {
+    color: var(--chat-cinza);
+  }
+  80% {
+    color: var(--chat-azul);
+  }
+  100% {
+    color: var(--chat-cinza);
+  }
+}
+.aia-pensa-icone-forma[data-forma="lapis"] > svg {
+  transform-origin: 20% 90%;
+  animation: aia-lapis 1.1s ease-in-out infinite;
+}
+@keyframes aia-lapis {
+  50% {
+    transform: rotate(-12deg) translateX(1px);
+  }
+}
+.aia-pensa-fluxo {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* um passo ao vivo: a bola (a mesma da cadeia de pensamento) e a frase, à frente dela e com a mesma altura de linha */
+.aia-pensa-passo {
+  display: flex;
+  align-items: stretch;
+  gap: 0.55rem;
+  animation: aia-pensa-frase 0.45s ease both;
+}
+.aia-pensa-frase {
+  margin: 0;
+  min-width: 0;
+  padding-bottom: 0.6rem;
+  line-height: var(--_marca, 1.25rem);
+  overflow-wrap: anywhere;
+}
+.aia-pensa-passo:last-child .aia-pensa-frase {
+  padding-bottom: 0;
+}
+@keyframes aia-pensa-frase {
+  from {
+    opacity: 0;
+  }
+}
+.aia-pensa-gaveta {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.25s ease;
+}
+.aia-pensa-gaveta[data-aberto="sim"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.aia-pensa-interior {
+  min-height: 0;
+  overflow: hidden;
+}
+.aia-pensa-cartao {
+  margin-top: 0.55rem;
+  padding: 0.8rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--chat-azul) 14%, var(--chat-branco));
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--chat-azul) 3%, var(--chat-branco));
+}
+
+/* ─── avaliar uma resposta: «Esta resposta ajudou?» → boa (e quão boa) ou má (e porquê), com comentário opcional ─── */
+.aia-avalia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--chat-cinza);
+  font-size: 0.8125rem;
+}
+.aia-avalia-pergunta {
+  margin-right: 0.15rem;
+  font-weight: 500;
+}
+.aia-avalia-polegar,
+.aia-avalia-opcao,
+.aia-form-opcao {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--chat-azul) 35%, var(--chat-branco));
+  border-radius: 9999px;
+  background: var(--chat-branco);
+  color: var(--chat-azul);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-out,
+    border-color 0.15s ease-out,
+    transform 0.15s ease-out;
+}
+.aia-avalia-icone {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+@media (hover: hover) {
+  .aia-avalia-polegar:hover,
+  .aia-avalia-opcao:hover,
+  .aia-form-opcao:hover {
+    border-color: var(--chat-azul);
+  }
+}
+/* a opção escolhida fica azul, com letra branca e a luz interior dos botões 3D */
+.aia-avalia-opcao[data-escolhida="sim"],
+.aia-form-opcao[data-escolhida="sim"] {
+  border-color: var(--chat-azul);
+  background: var(--chat-azul);
+  box-shadow: inset 0 1px 2px var(--aia-luz, rgb(255 255 255 / 0.45));
+  color: var(--chat-branco);
+}
+.aia-avalia-polegar:active,
+.aia-avalia-opcao:active,
+.aia-form-opcao:active {
+  transform: scale(0.96);
+}
+.aia-avalia-polegar:focus-visible,
+.aia-avalia-opcao:focus-visible,
+.aia-form-opcao:focus-visible,
+.aia-avalia-enviar:focus-visible,
+.aia-form-enviar:focus-visible,
+.aia-avalia-cancelar:focus-visible,
+.aia-form-entrada:focus-visible,
+.aia-avalia-texto:focus-visible {
+  outline: 2px solid var(--chat-azul);
+  outline-offset: 2px;
+}
+.aia-avalia-feita {
+  gap: 0.35rem 0;
+}
+.aia-avalia-feita > * + * {
+  margin-left: 0.6rem;
+}
+.aia-avalia-obrigado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 16rem;
+  color: var(--chat-azul);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  transition:
+    max-width 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    margin 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.4s ease;
+}
+/* o agradecimento sai sozinho: desvanece e encolhe, e o que vem a seguir desliza para o seu lugar */
+.aia-avalia-obrigado[data-saindo="sim"] {
+  max-width: 0;
+  margin-right: -0.6rem;
+  opacity: 0;
+}
+.aia-avalia-obrigado .aia-avalia-icone {
+  color: var(--chat-azul);
+}
+.aia-avalia-acoes {
+  display: inline-flex;
+  gap: 0.6rem;
+}
+/* o tempo para mudar de ideia: só o lápis (alterar) com os segundos que faltam à frente dele */
+.aia-avalia-acoes {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+.aia-avalia-contagem {
+  color: var(--chat-cinza);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.aia-avalia-lapis {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: var(--chat-azul);
+  cursor: pointer;
+  transition: background-color 0.15s ease-out;
+}
+@media (hover: hover) {
+  .aia-avalia-lapis:hover {
+    background: var(--chat-amarelo);
+  }
+}
+.aia-avalia-lapis:focus-visible {
+  outline: 2px solid var(--chat-azul);
+  outline-offset: 2px;
+}
+.aia-avalia-cancelar {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--chat-azul);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline dashed;
+  text-decoration-color: var(--chat-azul);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.1em;
+  cursor: pointer;
+}
+.aia-avalia-cartao,
+.aia-form {
+  /* ao rolar até ao cartão, ele fica acima do esbatido da escrita */
+  scroll-margin-bottom: 1.75rem;
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--chat-azul) 18%, var(--chat-branco));
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--chat-azul) 2.5%, var(--chat-branco));
+  color: var(--chat-azul);
+  font-size: 0.875rem;
+}
+.aia-avalia-grupo {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.aia-avalia-grupo legend,
+.aia-avalia-legenda,
+.aia-form-legenda {
+  padding: 0;
+  margin: 0;
+  color: var(--chat-azul);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.aia-avalia-opcoes,
+.aia-form-opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.aia-avalia-texto,
+.aia-form-entrada {
+  width: 100%;
+  min-width: 0;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--chat-azul) 30%, var(--chat-branco));
+  border-radius: 0.75rem;
+  background: var(--chat-branco);
+  color: var(--chat-azul);
+  font: inherit;
+  /* 16 px no telemóvel para o iOS não aproximar o ecrã ao escrever */
+  font-size: max(1rem, var(--aia-tipo, 0.9375rem));
+  resize: vertical;
+}
+.aia-avalia-texto::placeholder,
+.aia-form-entrada::placeholder {
+  color: var(--chat-cinza);
+}
+.aia-avalia-aviso,
+.aia-form-aviso {
+  margin: 0;
+  color: var(--chat-cinza);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.aia-avalia-erro,
+.aia-form-erro {
+  margin: 0;
+  padding-left: 0.5rem;
+  border-left: 3px solid var(--chat-amarelo);
+  color: var(--chat-azul);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+/* por baixo da caixa de texto: as opções de avaliação à esquerda e a seta de enviar e o X de cancelar à direita (se não couberem
+   na mesma linha, os botões descem e ficam à direita) */
+.aia-avalia-rodape {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+/* as opções ocupam o que sobra da faixa e, se forem muitas (os motivos de uma má avaliação), rolam para o lado: a seta e o X ficam SEMPRE
+   na mesma faixa, à direita, alinhados com as opções — nunca por baixo */
+.aia-avalia-rodape > .aia-avalia-grupo {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.aia-avalia-rodape .aia-avalia-opcoes {
+  flex-wrap: nowrap;
+  gap: 0.3rem;
+  padding-block: 0.15rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 1.25rem), transparent);
+  mask-image: linear-gradient(to right, black calc(100% - 1.25rem), transparent);
+}
+.aia-avalia-rodape .aia-avalia-opcoes::-webkit-scrollbar {
+  display: none;
+}
+.aia-avalia-rodape .aia-avalia-opcao {
+  flex: none;
+  white-space: nowrap;
+}
+/* para caberem na mesma faixa que os botões, as opções e os botões são mais pequenos aqui */
+.aia-avalia-rodape .aia-avalia-opcao {
+  padding: 0.22rem 0.6rem;
+  font-size: 0.75rem;
+}
+.aia-avalia-botoes {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.35rem;
+}
+.aia-avalia-enviar,
+.aia-form-enviar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.6rem 1.2rem;
+  border: 1px solid var(--aia-luz-borda, rgb(255 255 255 / 0.4));
+  border-radius: 9999px;
+  background: var(--chat-azul);
+  color: var(--chat-branco);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: inset 0 1px 2px var(--aia-luz, rgb(255 255 255 / 0.45));
+  transition:
+    background-color 0.15s ease-out,
+    color 0.15s ease-out,
+    transform 0.15s ease-out;
+}
+.aia-avalia-enviar:disabled,
+.aia-form-enviar:disabled {
+  background: color-mix(in srgb, var(--chat-azul) 7%, var(--chat-branco));
+  color: color-mix(in srgb, var(--chat-azul) 45%, var(--chat-branco));
+  box-shadow: none;
+  cursor: default;
+}
+/* a seta de enviar e o X de cancelar: dois botões redondos por baixo da caixa de texto */
+.aia-avalia-enviar,
+.aia-avalia-cancelar {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 9999px;
+}
+.aia-avalia-enviar {
+  box-shadow:
+    inset 0 1px 2px var(--aia-luz, rgb(255 255 255 / 0.45)),
+    0 3px 3px -1.5px rgb(16 24 40 / 0.06),
+    0 1px 1px rgb(16 24 40 / 0.08);
+}
+/* o X de cancelar é vermelho e em relevo, como o «Não autorizo» */
+.aia-avalia-cancelar {
+  border: 1px solid var(--aia-luz-borda, rgb(255 255 255 / 0.4));
+  background: var(--chat-vermelho);
+  color: var(--chat-branco);
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 2px var(--aia-luz, rgb(255 255 255 / 0.45)),
+    0 3px 3px -1.5px rgb(16 24 40 / 0.06),
+    0 1px 1px rgb(16 24 40 / 0.08);
+  transition: background-color 0.15s ease-out;
+}
+@media (hover: hover) {
+  .aia-avalia-cancelar:hover {
+    background: var(--chat-vermelho-forte);
+  }
+}
+.aia-avalia-texto {
+  resize: none;
+  font-weight: 600;
+}
+/* a enviar: o botão não esmorece (continua azul e em relevo) com o carregamento branco e «A enviar…» */
+.aia-avalia-enviar[aria-busy="true"]:disabled,
+.aia-form-enviar[aria-busy="true"]:disabled {
+  background: var(--chat-azul);
+  color: var(--chat-branco);
+  box-shadow: inset 0 1px 2px var(--aia-luz, rgb(255 255 255 / 0.45));
+  cursor: progress;
+}
+/* uma mensagem em fila (escrita enquanto o assistente trabalhava): o loading DENTRO da bolha, à esquerda, até ele a poder ver; ao sair da
+   fila o loading encolhe e desaparece a animar */
+.aia-eu[data-espera] {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.aia-eu-texto {
+  min-width: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.aia-eu-espera {
+  display: inline-flex;
+  flex: none;
+  width: 1rem;
+  margin-top: 0.22em;
+  overflow: hidden;
+  color: var(--chat-azul);
+}
+.aia-eu-espera[data-saindo="sim"] {
+  animation: aia-fila-sai 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes aia-fila-sai {
+  to {
+    width: 0;
+    margin-right: -0.6rem;
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+/* o carregamento do site (nove quadrados a pulsar em cascata), pequeno e com a cor do texto do botão */
+.aia-carregar {
+  display: inline-flex;
+  flex: none;
+}
+.aia-carregar-grelha {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5px;
+  width: 1rem;
+  height: 1rem;
+}
+.aia-carregar-grelha > i {
+  background: currentColor;
+  animation: aia-carregar-pulsa 1.5s cubic-bezier(0.4, 0, 0.6, 1) var(--aia-atraso, 0s) infinite;
+}
+@keyframes aia-carregar-pulsa {
+  50% {
+    opacity: 0.3;
+  }
+}
+@media (hover: hover) {
+  .aia-avalia-enviar:not(:disabled):hover,
+  .aia-form-enviar:not(:disabled):hover {
+    background: var(--chat-amarelo);
+    color: var(--chat-azul);
+  }
+}
+.aia-avalia-enviar:not(:disabled):active,
+.aia-form-enviar:not(:disabled):active {
+  transform: scale(0.96);
+}
+
+/* ─── os formulários que a IA pede ─── */
+.aia-form-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  color: var(--chat-azul);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+.aia-form-icone {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+.aia-form-campo {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.aia-form-opcional {
+  color: var(--chat-cinza);
+  font-weight: 500;
+}
+.aia-form-opcoes[data-escala="sim"] {
+  flex-wrap: nowrap;
+}
+.aia-form-opcoes[data-escala="sim"] .aia-form-opcao {
+  flex: 1;
+  justify-content: center;
+  padding-inline: 0;
+}
+.aia-form-resumo {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+}
+.aia-form-resumo dt {
+  color: var(--chat-cinza);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.aia-form-resumo dd {
+  margin: 0;
+  color: var(--chat-azul);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aia-autorizar,
+  .aia-pensa-gaveta,
+  .aia-pensa-janela,
+  .aia-pensa-fluxo,
+  .aia-pensa-seta,
+  .aia-botao-3d,
+  .aia-botao-seta > svg {
+    transition: none;
+  }
+  .aia-pensa,
+  .aia-pensa-frase,
+  .aia-pensa-brilho,
+  .aia-carregar-grelha > i,
+  .aia-pensa-icone-forma,
+  .aia-pensa-icone-forma > svg,
+  .aia-botao-forma,
+  .aia-botao-forma > svg {
+    animation: none;
+  }
+  .aia-bot .aia-fonte-texto::after,
+  .aia-bot a.aia-ligacao-pagina::after,
+  .aia-opcao-rapida::after {
+    transition: none;
+  }
+  .aia-pensa-janela {
+    transition: none;
+  }
+  .aia-pensa-brilho {
+    background: none;
+    color: var(--chat-azul);
+  }
+}
+
+/* ==========================================================================
+   O cabeçalho sem faixa azul, o estado ao vivo, o menu, o histórico e o teclado.
+   O cabeçalho é só a fotografia do assistente (com a bolinha de estado EM CIMA dela), o nome e o estado ao vivo, sobre um esbatido
+   branco: a conversa passa por baixo e desvanece-se — não há faixa a cortar o painel. Por baixo, a base (perguntas, autorização e escrita)
+   faz o mesmo ao contrário. Com o teclado aberto o painel é só a parte visível do ecrã (a escrita fica encostada ao teclado).
+   ========================================================================== */
+.aia-avatar-vivo {
+  position: relative;
+  flex: none;
+  display: block;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+/* a bolinha de estado, em cima da fotografia: VERDE com alguém online (a IA ou uma pessoa) e amarela («ausente») quando não há ninguém.
+   Uma esfera em relevo — só uma luz em cima à esquerda e o anel branco que a separa da fotografia —, sem sombras nem brilhos */
+.aia-vivo {
+  --_cor: var(--aia-verde);
+  position: absolute;
+  right: -0.15rem;
+  bottom: -0.15rem;
+  box-sizing: border-box;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--chat-branco);
+  border-radius: 9999px;
+  background: radial-gradient(circle at 32% 28%, rgb(255 255 255 / 0.55) 0, rgb(255 255 255 / 0) 55%), var(--_cor);
+}
+.aia-avatar-vivo[data-modo="offline"] .aia-vivo {
+  --_cor: var(--chat-amarelo);
+}
+/* a linha do estado: o texto e, à frente dele, o «i» redondo que liga as datas e as horas da conversa */
+.aia-estado-linha {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.aia-estado-linha > .aia-estado {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.aia-info {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: var(--chat-cinza);
+  cursor: pointer;
+}
+/* a área de toque é maior do que o círculo */
+.aia-info::after {
+  content: "";
+  position: absolute;
+  inset: -0.4rem;
+}
+.aia-info .aia-icone-pequeno {
+  width: 1rem;
+  height: 1rem;
+  stroke-width: 2;
+}
+/* ligado: azul, com o «i» branco, em relevo (fica assim até se desligar) */
+.aia-info[aria-pressed="true"] {
+  background: var(--chat-azul);
+  box-shadow: var(--chat-relevo);
+  color: var(--chat-branco);
+}
+.aia-info:focus-visible {
+  outline: 2px solid var(--chat-azul);
+  outline-offset: 2px;
+}
+/* com as datas ligadas, a data e a hora de CADA mensagem ficam sempre à vista, por baixo dela */
+.aia-lista[data-datas="sim"] .aia-linha[data-de] .aia-detalhe {
+  opacity: 1;
+}
+.aia-estado {
+  display: block;
+  color: var(--chat-cinza);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+/* a lista não tem mais um corte no topo: o cabeçalho esbate-se por cima dela e ela começa por baixo do cabeçalho */
+.aia-base {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  background: var(--chat-branco);
+}
+.aia-base::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  height: 1.5rem;
+  background: linear-gradient(to bottom, rgb(255 255 255 / 0), var(--chat-branco));
+  pointer-events: none;
+}
+
+/* ─── o lixo (parar e apagar a conversa que a equipa guardou) ─── */
+.aia-lixo {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-block: -0.4rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: var(--chat-azul);
+  vertical-align: middle;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-out,
+    color 0.15s ease-out;
+}
+@media (hover: hover) {
+  .aia-lixo:hover {
+    background: var(--chat-amarelo);
+  }
+}
+.aia-lixo:focus-visible,
+.aia-menu-botao:focus-visible,
+.aia-menu-item:focus-visible,
+.aia-menu-confirmar button:focus-visible,
+.aia-historico button:focus-visible,
+.aia-historico-titulo-campo:focus-visible {
+  outline: 2px solid var(--chat-azul);
+  outline-offset: 2px;
+}
+
+/* ─── o menu (hambúrguer) ─── */
+.aia-menu {
+  position: absolute;
+  top: 3.6rem;
+  right: 0.75rem;
+  z-index: 6;
+  width: min(17rem, calc(100% - 1.5rem));
+  padding: 0.35rem;
+  border: 1px solid var(--chat-linha);
+  border-radius: 0.95rem;
+  background: var(--chat-branco);
+  transform: translateY(-0.35rem) scale(0.97);
+  transform-origin: top right;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease,
+    visibility 0s linear 0.25s;
+}
+.aia-menu[data-aberto="sim"] {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease,
+    visibility 0s;
+}
+/* o X que fecha o menu mora dentro do próprio cartão, no canto de cima; o primeiro item deixa-lhe espaço */
+.aia-menu-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.1rem 0.15rem 0.2rem 0.75rem;
+  border: 0;
+  background: none;
+  color: var(--chat-azul);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.aia-menu-fechar {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 9999px;
+  color: var(--chat-azul);
+}
+.aia-menu-topo:focus-visible {
+  outline: 2px solid var(--chat-azul);
+  outline-offset: 2px;
+  border-radius: 0.65rem;
+}
+.aia-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: none;
+  color: var(--chat-azul);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-out,
+    color 0.15s ease-out;
+}
+.aia-menu-perigo {
+  color: var(--chat-vermelho-forte);
+}
+@media (hover: hover) {
+  .aia-menu-item:not(:disabled):hover {
+    background: var(--chat-amarelo);
+    color: var(--chat-azul);
+  }
+}
+.aia-menu-item:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.aia-menu-confirmar {
+  padding: 0.55rem 0.65rem 0.65rem;
+}
+.aia-menu-confirmar p {
+  margin: 0 0 0.65rem;
+  color: var(--chat-azul);
+  font-weight: 600;
+  line-height: 1.35;
+}
+.aia-menu-confirmar-botoes {
+  display: flex;
+  gap: 0.5rem;
+}
+.aia-menu-perigo-solido,
+.aia-menu-cancelar {
+  flex: 1;
+  min-height: 2.5rem;
+  padding: 0 0.9rem;
+  border-radius: 9999px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.aia-menu-perigo-solido {
+  border: 1px solid var(--aia-luz-borda, rgb(255 255 255 / 0.4));
+  background: var(--chat-vermelho);
+  color: var(--chat-branco);
+  box-shadow:
+    inset 0 1px 2px var(--aia-luz, rgb(255 255 255 / 0.45)),
+    0 3px 3px -1.5px rgb(16 24 40 / 0.06),
+    0 1px 1px rgb(16 24 40 / 0.08);
+}
+.aia-menu-cancelar {
+  border: 1px solid var(--chat-azul);
+  background: var(--chat-branco);
+  color: var(--chat-azul);
+}
+@media (hover: hover) {
+  .aia-menu-perigo-solido:hover {
+    background: var(--chat-vermelho-forte);
+  }
+  .aia-menu-cancelar:hover {
+    background: var(--chat-amarelo);
+  }
+}
+
+/* ─── o histórico de conversas (cobre a conversa e a base, por baixo do cabeçalho) ─── */
+.aia-historico {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  padding-top: 5.35rem;
+  background: var(--chat-branco);
+  transform: translateX(0.75rem);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.25s ease,
+    visibility 0s linear 0.3s;
+}
+.aia-historico[data-aberto="sim"] {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.25s ease,
+    visibility 0s;
+}
+.aia-historico-topo {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-height: 2.25rem;
+  margin-bottom: 0.4rem;
+  padding: 0 0.6rem;
+}
+/* o título ao meio: o chevron à esquerda e um espaço do mesmo tamanho à direita mantêm-no centrado e na mesma linha que o chevron */
+.aia-historico-topo::after {
+  content: "";
+  flex: none;
+  width: 2.25rem;
+}
+.aia-historico-topo h3 {
+  flex: 1;
+  margin: 0;
+  color: var(--chat-azul);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+}
+.aia-historico-voltar,
+.aia-historico-acao {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: var(--chat-azul);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-out,
+    color 0.15s ease-out;
+}
+.aia-historico-acao {
+  width: 2rem;
+  height: 2rem;
+}
+@media (hover: hover) {
+  .aia-historico-voltar:hover,
+  .aia-historico-acao:not(:disabled):hover {
+    background: var(--chat-amarelo);
+  }
+}
+.aia-historico-acao:disabled,
+.aia-historico-abrir:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.aia-historico-lista {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.25rem 0.75rem 1rem;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--chat-azul) 35%, var(--chat-branco)) transparent;
+}
+.aia-historico-item {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  padding-right: 0.3rem;
+  border: 1px solid var(--chat-linha);
+  border-radius: 0.95rem;
+  background: var(--chat-branco);
+}
+.aia-historico-item[data-atual="sim"] {
+  border-color: var(--chat-azul);
+  background: color-mix(in srgb, var(--chat-azul) 4%, var(--chat-branco));
+}
+.aia-historico-abrir {
+  flex: 1;
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  padding: 0.65rem 0.4rem 0.65rem 0.8rem;
+  border: 0;
+  border-radius: 0.95rem;
+  background: none;
+  color: var(--chat-azul);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.aia-historico-abrir strong {
+  overflow: hidden;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.aia-historico-abrir small {
+  color: var(--chat-cinza);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.aia-historico-linha {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.1rem;
+  min-width: 0;
+}
+/* mudar o título é no próprio sítio: o campo tem o aspecto do título (mesma letra, sem caixa) e a data fica onde estava */
+.aia-historico-abrir[data-edicao="sim"] {
+  cursor: text;
+}
+.aia-historico-titulo-campo {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  caret-color: var(--chat-azul);
+}
+.aia-historico-titulo-campo:focus,
+.aia-historico-titulo-campo:focus-visible {
+  outline: none;
+}
+/* o iOS aproxima o ecrã ao escrever num campo de menos de 16 px */
+@supports (-webkit-touch-callout: none) {
+  .aia-historico-titulo-campo {
+    font-size: 16px;
+  }
+}
+/* o botão de enviar do projecto ocupa o lugar do redondo do módulo */
+.aia-enviar-do-projecto {
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+.aia-historico-vazio {
+  margin: 2rem 1.25rem;
+  color: var(--chat-cinza);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+@media (max-width: 39.99rem) {
+  .aia-menu {
+    top: calc(3.6rem + env(safe-area-inset-top));
+  }
+  .aia-historico {
+    padding-top: calc(5.35rem + env(safe-area-inset-top));
+  }
+  .aia-lista {
+    padding-top: calc(4.85rem + env(safe-area-inset-top));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aia-menu,
+  .aia-historico {
+    transition: none;
+  }
+}
+
+/* ─── o hambúrguer: o MESMO do site (três traços, o primeiro curto e à direita); ao abrir o menu só ganha um fundo, porque o X do chat é o de fechar ─── */
+.aia-burger-caixa {
+  position: relative;
+  display: block;
+  width: 1.15rem;
+  height: 0.93rem;
+}
+.aia-burger-traco {
+  position: absolute;
+  right: 0;
+  width: 1.15rem;
+  height: 0.17rem;
+  background: currentColor;
+  transform-origin: center;
+}
+.aia-burger-traco:nth-child(1) {
+  top: 0;
+  width: 0.7rem;
+}
+.aia-burger-traco:nth-child(2) {
+  top: calc(50% - 0.085rem);
+}
+.aia-burger-traco:nth-child(3) {
+  top: calc(100% - 0.17rem);
+}
+
+/* ─── botões ao pairar: AZUIS e em 3D (letras e ícones brancos); o X e o apagar ficam VERMELHOS e em 3D, só ao pairar ─── */
+@media (hover: hover) {
+  .aia .aia-sugestao:hover,
+  .aia .aia-chamada:hover,
+  .aia .aia-menu-item:not(:disabled):not(.aia-menu-perigo):hover,
+  .aia .aia-menu-cancelar:hover,
+  .aia .aia-menu-botao:hover,
+  .aia .aia-info:hover,
+  .aia .aia-avalia-polegar:hover,
+  .aia .aia-avalia-opcao:hover,
+  .aia .aia-form-opcao:hover,
+  .aia .aia-avalia-lapis:hover,
+  .aia .aia-historico-voltar:hover,
+  .aia .aia-historico-acao:not(:disabled):not(.aia-historico-apagar):hover {
+    border-color: var(--aia-luz-borda, rgb(255 255 255 / 0.4));
+    background: var(--chat-azul);
+    box-shadow: var(--chat-relevo);
+    color: var(--chat-branco);
+  }
+  .aia .aia-fechar:hover,
+  .aia .aia-convite-fechar:hover,
+  .aia .aia-menu-topo:hover .aia-menu-fechar,
+  .aia .aia-menu-item.aia-menu-perigo:not(:disabled):hover,
+  .aia .aia-lixo:hover,
+  .aia .aia-historico-apagar:not(:disabled):hover {
+    background: var(--chat-vermelho);
+    box-shadow: var(--chat-relevo);
+    color: var(--chat-branco);
+  }
+}
+
+/* a fotografia de quem escreve (a silhueta cinzenta) aparece à direita da mensagem dele, ao puxar a conversa para a esquerda */
+.aia-linha[data-de="eu"] > .aia-foto {
+  right: auto;
+  left: calc(100% + 0.45rem);
+  opacity: var(--revelar-esq);
+}
+
+/* ─── as extensões do projecto: cartões, anexos e o clipe ─── */
+/* os cartões que a resposta traz (desenhados pelo projecto): por baixo do texto, com espaço entre eles */
+.aia-cartoes {
+  display: grid;
+  gap: 0.6rem;
+}
+/* o anexo dentro da bolha da pessoa (a prévia é do projecto) */
+.aia-anexo {
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 1.1rem 1.1rem 0.3rem 1.1rem;
+}
+/* o ficheiro a ser enviado: o nome e a barra de progresso */
+.aia-envio {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 11rem;
+  padding: 0.55rem 0.9rem;
+  border: 1.5px dashed var(--chat-azul);
+  border-radius: 1.1rem 1.1rem 0.3rem 1.1rem;
+  color: var(--chat-azul);
+  font-weight: 500;
+}
+.aia-envio-nome {
+  overflow-wrap: anywhere;
+  font-size: 0.8125rem;
+}
+.aia-envio-barra {
+  display: block;
+  height: 0.3rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--chat-fundo-bot);
+}
+.aia-envio-barra > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--chat-azul);
+  transition: width 0.2s ease-out;
+}
+/* o clipe: um botão redondo e leve ao lado da escrita (3D e azul ao passar o rato, como os outros) */
+.aia-clipe {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: var(--chat-azul);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease-out,
+    color 0.15s ease-out;
+}
+@media (hover: hover) {
+  .aia-clipe:not(:disabled):hover {
+    background: var(--chat-azul);
+    box-shadow: var(--chat-relevo);
+    color: var(--chat-branco);
+  }
+}
+.aia-clipe:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.aia-escrita:has(.aia-clipe) {
+  padding-left: 0.3rem;
+}
+/* largar ficheiros em cima do chat: um véu leve com o aviso */
+.aia-largar {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--chat-azul);
+  background: color-mix(in srgb, var(--chat-branco) 88%, transparent);
+  color: var(--chat-azul);
+  font-weight: 700;
+  pointer-events: none;
+}
+
+/* um cartão do projecto no meio do texto da resposta (a IA escreveu «[[cartao]]» ali): respira em cima e em baixo */
+.aia-cartao-no-texto {
+  margin: 0.6rem 0;
+}
+
+/* rolar a conversa (ou o histórico) até ao fim não rola a página por baixo; o mesmo nas faixas que rolam de lado */
+.aia-lista,
+.aia-historico-lista {
+  overscroll-behavior: contain;
+}
+.aia-sugestoes,
+.aia-avalia-rodape .aia-avalia-opcoes {
+  overscroll-behavior-x: contain;
+}

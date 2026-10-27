@@ -1,0 +1,17 @@
+/* O tema por omissão do assistente (um exemplo: azul-marinho e amarelo). O módulo só lê as variáveis --aia-*: um projecto escreve o seu
+   ficheiro de tema a mapeá-las para as cores dele (nada de hex nos estilos do módulo) e não importa este. Também serve ao painel
+   (a cadeia de pensamento e as páginas de avaliações), por isso as variáveis vivem na raiz. */
+:root {
+  --aia-azul: #11114e; /* o tom principal: texto, botões, cabeçalho */
+  --aia-amarelo: #ffc100; /* o realce (estados, focos) */
+  --aia-cinza: #5a616c; /* o texto secundário */
+  --aia-branco: #ffffff; /* o fundo do chat e o texto sobre o tom principal */
+  --aia-vermelho: #d32f2f; /* fechar e apagar */
+  --aia-vermelho-forte: #b71c1c; /* o mesmo, ao passar o rato, e os erros */
+  --aia-verde: #00f700; /* a bolinha de «alguém online» */
+  --aia-azul-bebe: #e0e9f5; /* o preenchimento dos blocos clicáveis dentro do texto */
+  --aia-azul-bebe-forte: #cddbee; /* o mesmo, ao passar o rato */
+  --aia-silhueta-1: #b3bac1; /* a silhueta cinzenta do avatar, de cima para baixo */
+  --aia-silhueta-2: #8f979f;
+  --aia-silhueta-3: #5b636c;
+}

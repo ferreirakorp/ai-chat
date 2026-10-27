@@ -1,0 +1,257 @@
+/* O painel do assistente: leitura do raciocinio, das avaliacoes, das respostas dos formularios e as medidas. Autonomo: as cores vêm de
+   --aia-azul, --aia-amarelo e --aia-cinza (valores por omissao). */
+.aia-admin-raciocinio,
+.aia-admin-avaliacao,
+.aia-admin-respostas,
+.aia-admin-medidas,
+.aia-admin-perguntas {
+  --_azul: var(--aia-azul);
+  --_amarelo: var(--aia-amarelo);
+  --_cinza: var(--aia-cinza);
+  --_branco: var(--aia-branco);
+  --_linha: color-mix(in srgb, var(--_azul) 16%, var(--_branco));
+}
+
+.aia-admin-raciocinio {
+  margin: 0.5rem 0 0;
+  border: 1px solid var(--_linha);
+  border-radius: 0.75rem;
+  background: var(--_branco);
+}
+.aia-admin-raciocinio > summary {
+  padding: 0.55rem 0.8rem;
+  color: var(--_azul);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.aia-admin-raciocinio-corpo {
+  padding: 0.2rem 0.9rem 0.9rem;
+}
+
+.aia-admin-avaliacao {
+  display: grid;
+  gap: 0.5rem;
+}
+.aia-admin-avaliacao-topo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+.aia-admin-selo {
+  padding: 0.2rem 0.7rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  background: var(--_amarelo);
+  color: var(--_azul);
+}
+.aia-admin-selo[data-sentido="ma"] {
+  background: var(--_azul);
+  color: var(--_branco);
+}
+.aia-admin-nota {
+  color: var(--_cinza);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.aia-admin-motivos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.aia-admin-motivos li {
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--_linha);
+  border-radius: 9999px;
+  color: var(--_azul);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.aia-admin-comentario {
+  margin: 0;
+  padding: 0.4rem 0.8rem;
+  border-left: 3px solid var(--_amarelo);
+  color: var(--_azul);
+  font-size: 0.9375rem;
+  white-space: pre-line;
+}
+
+.aia-admin-respostas {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+}
+.aia-admin-respostas dt {
+  color: var(--_cinza);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.aia-admin-respostas dd {
+  margin: 0;
+  color: var(--_azul);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.aia-admin-vazio {
+  margin: 0;
+  color: var(--aia-cinza);
+  font-size: 0.875rem;
+}
+
+/* as medidas */
+.aia-admin-medidas {
+  display: grid;
+  gap: 1.5rem;
+}
+.aia-admin-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.aia-admin-kpis li {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--_linha);
+  border-radius: 1rem;
+  background: var(--_branco);
+}
+.aia-admin-kpis span {
+  color: var(--_cinza);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.aia-admin-kpis strong {
+  color: var(--_azul);
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.aia-admin-kpis small {
+  color: var(--_cinza);
+  font-size: 0.75rem;
+}
+.aia-admin-graficos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1.5rem;
+}
+.aia-admin-medidas h3,
+.aia-admin-pergunta h3 {
+  margin: 0 0 0.5rem;
+  color: var(--_azul);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+.aia-admin-barras {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.aia-admin-barras li {
+  display: grid;
+  grid-template-columns: minmax(7rem, 11rem) 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--_azul);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.aia-admin-barras b {
+  min-width: 2.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.aia-admin-barra {
+  display: block;
+  height: 0.6rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--_azul) 8%, var(--_branco));
+}
+.aia-admin-barra i {
+  display: block;
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--_amarelo);
+}
+.aia-admin-barra i[data-sentido="ma"] {
+  background: var(--_azul);
+}
+.aia-admin-dias {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.aia-admin-dias li {
+  display: grid;
+  gap: 0.2rem;
+  justify-items: center;
+}
+.aia-admin-dia-barra {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-start;
+  width: 100%;
+  height: 4.5rem;
+  overflow: hidden;
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--_azul) 6%, var(--_branco));
+}
+.aia-admin-dia-barra i {
+  display: block;
+  width: 100%;
+  background: var(--_amarelo);
+}
+.aia-admin-dia-barra i[data-sentido="ma"] {
+  background: var(--_azul);
+}
+.aia-admin-dias small {
+  color: var(--_cinza);
+  font-size: 0.6875rem;
+}
+
+/* as perguntas dos formularios */
+.aia-admin-perguntas {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.aia-admin-pergunta {
+  padding: 1rem;
+  border: 1px solid var(--_linha);
+  border-radius: 1rem;
+  background: var(--_branco);
+}
+.aia-admin-pergunta-meta,
+.aia-admin-pergunta-numeros {
+  margin: 0 0 0.6rem;
+  color: var(--_cinza);
+  font-size: 0.8125rem;
+}
+.aia-admin-pergunta-numeros b {
+  color: var(--_azul);
+}
+.aia-admin-exemplos {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--_azul);
+  font-size: 0.875rem;
+}

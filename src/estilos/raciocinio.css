@@ -1,0 +1,267 @@
+/* A cadeia de pensamento (nucleo do raciocinio): autonoma, serve ao chat e ao painel. As cores vêm de variaveis do projecto
+   (--aia-azul, --aia-amarelo, --aia-cinza) com valores por omissao. */
+.aia-cadeia {
+  --_azul: var(--aia-azul);
+  --_amarelo: var(--aia-amarelo);
+  --_cinza: var(--aia-cinza);
+  --_branco: var(--aia-branco);
+  /* o diametro da marca de cada passo: o titulo tem esta mesma altura de linha, por isso a marca fica sempre ao centro da 1.ª linha */
+  --_marca: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.aia-cadeia-passo {
+  display: flex;
+  gap: 0.65rem;
+}
+/* a coluna da marca: largura fixa, a marca ao centro, no mesmo eixo em TODOS os passos (bolas soltas, sem fio a ligá-las) */
+.aia-cadeia-lado {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  width: var(--_marca);
+}
+.aia-cadeia-marca {
+  display: grid;
+  flex: none;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--_marca);
+  height: var(--_marca);
+  border-radius: 9999px;
+  color: var(--_branco);
+}
+/* feito: circulo azul cheio com visto branco, em relevo (a mesma receita dos botoes 3D do site) */
+.aia-cadeia-marca[data-estado="feito"] {
+  border: 1px solid var(--aia-luz-borda, rgb(255 255 255 / 0.4));
+  background: var(--_azul);
+  box-shadow:
+    inset 0 1px 1px var(--aia-luz, rgb(255 255 255 / 0.45)),
+    inset 0 -1px 1px rgb(0 0 0 / 0.22),
+    0 1px 2px rgb(16 24 40 / 0.2);
+}
+.aia-cadeia-visto {
+  width: 0.7rem;
+  height: 0.7rem;
+}
+/* por fazer: círculo a pontilhado, cinzento; a fazer: o mesmo círculo a pontilhado, azul, a rodar devagar — do mesmo tamanho que o visto */
+.aia-cadeia-marca[data-estado="ativo"],
+.aia-cadeia-marca[data-estado="pendente"] {
+  border: 2px dotted color-mix(in srgb, var(--_cinza) 75%, var(--_branco));
+  background: transparent;
+}
+.aia-cadeia-marca[data-estado="ativo"] {
+  border-color: var(--_azul);
+  animation: aia-cadeia-roda 2.4s linear infinite;
+}
+@keyframes aia-cadeia-roda {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* o fio entre as bolas: azul cheio onde já se chegou; a CORRER (um brilho que desce) até ao passo que se está a fazer; a pontilhado depois */
+.aia-cadeia-linha {
+  flex: 1;
+  width: 2px;
+  min-height: 0.5rem;
+  margin: 0.2rem 0;
+  border-radius: 9999px;
+}
+.aia-cadeia-linha[data-estado="feito"] {
+  background: var(--_azul);
+}
+.aia-cadeia-linha[data-estado="ativo"] {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--_azul) 22%, var(--_branco)) 0 30%,
+    var(--_azul) 50%,
+    color-mix(in srgb, var(--_azul) 22%, var(--_branco)) 70% 100%
+  );
+  background-size: 100% 300%;
+  animation: aia-cadeia-corre 1.2s linear infinite;
+}
+.aia-cadeia-linha[data-estado="pendente"] {
+  width: 0;
+  border-left: 2px dotted color-mix(in srgb, var(--_cinza) 60%, var(--_branco));
+  border-radius: 0;
+}
+@keyframes aia-cadeia-corre {
+  from {
+    background-position: 0 100%;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+.aia-cadeia-corpo {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 0.9rem;
+}
+.aia-cadeia-passo:last-child .aia-cadeia-corpo {
+  padding-bottom: 0;
+}
+.aia-cadeia-titulo {
+  margin: 0;
+  color: var(--_azul);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: var(--_marca);
+}
+.aia-cadeia-passo[data-estado="pendente"] .aia-cadeia-titulo {
+  color: var(--_cinza);
+  font-weight: 600;
+}
+.aia-cadeia-descricao {
+  margin: 0.1rem 0 0;
+  color: var(--_cinza);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+/* o que se procurou na web */
+.aia-cadeia-consulta {
+  margin: 0.25rem 0 0;
+  color: var(--_cinza);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.aia-cadeia-consulta strong {
+  margin-right: 0.35em;
+  color: var(--_azul);
+  font-weight: 700;
+}
+/* a lupa ao lado de «Pesquisa» e o termo pesquisado, entre plicas, que leva ao Google com a pesquisa já feita */
+.aia-cadeia-lupa {
+  display: inline-block;
+  width: 0.95em;
+  height: 0.95em;
+  margin-right: 0.3em;
+  color: var(--_azul);
+  vertical-align: -0.14em;
+  stroke-width: 2.6;
+}
+.aia-cadeia-termo {
+  color: var(--_azul);
+  font-weight: 600;
+  text-decoration: underline dashed;
+  text-decoration-color: color-mix(in srgb, var(--_azul) 55%, var(--_branco));
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.12em;
+  transition: text-decoration-color 0.15s ease-out;
+}
+@media (hover: hover) {
+  .aia-cadeia-termo:hover {
+    text-decoration-color: var(--_azul);
+  }
+}
+.aia-cadeia-termo:focus-visible {
+  border-radius: 0.2em;
+  outline: 2px solid var(--_azul);
+  outline-offset: 2px;
+}
+/* as fontes: uma bola numerada (a mesma que a resposta mostra no texto), o titulo, o resumo completo e o endereco de onde veio */
+.aia-cadeia-fontes {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.aia-cadeia-fonte {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--_azul) 18%, var(--_branco));
+  border-radius: 0.65rem;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 0.15s ease-out,
+    background-color 0.15s ease-out,
+    box-shadow 0.15s ease-out;
+}
+@media (hover: hover) {
+  .aia-cadeia-fonte:hover {
+    border-color: var(--_azul);
+    background: color-mix(in srgb, var(--_azul) 5%, var(--_branco));
+  }
+}
+/* a fonte que a pessoa pediu para ver (clicou na bola dela no texto) */
+.aia-cadeia-fonte[data-foco="sim"] {
+  border-color: var(--_azul);
+  background: color-mix(in srgb, var(--_azul) 7%, var(--_branco));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--_azul) 20%, transparent);
+}
+.aia-cadeia-fonte:focus-visible {
+  outline: 2px solid var(--_azul);
+  outline-offset: 2px;
+}
+.aia-cadeia-bola {
+  display: grid;
+  flex: none;
+  place-items: center;
+  box-sizing: border-box;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--aia-luz-borda, rgb(255 255 255 / 0.4));
+  border-radius: 9999px;
+  background: var(--_azul);
+  box-shadow:
+    inset 0 1px 1px var(--aia-luz, rgb(255 255 255 / 0.45)),
+    inset 0 -1px 1px rgb(0 0 0 / 0.22),
+    0 1px 2px rgb(16 24 40 / 0.2);
+  color: var(--_branco);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.aia-cadeia-fonte-externa {
+  flex: none;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-top: 0.2rem;
+  color: var(--_cinza);
+}
+.aia-cadeia-fonte-texto {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 0.15rem;
+}
+.aia-cadeia-fonte-texto strong {
+  color: var(--_azul);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.aia-cadeia-fonte-texto small {
+  color: var(--_cinza);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.aia-cadeia-fonte-texto em {
+  overflow: hidden;
+  color: var(--_cinza);
+  font-size: 0.6875rem;
+  font-style: normal;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .aia-cadeia-marca[data-estado="ativo"],
+  .aia-cadeia-linha[data-estado="ativo"] {
+    animation: none;
+  }
+  .aia-cadeia-fonte {
+    transition: none;
+  }
+}
