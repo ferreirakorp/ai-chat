@@ -92,6 +92,14 @@ describe("destinoSeguro", () => {
       expect(destinoSeguro(mau), mau).toBeNull();
     }
   });
+
+  it("com o site todo aberto («/*»), um endereço de outro sítio disfarçado de caminho continua recusado", () => {
+    const tudo: OpcoesDaResposta = { paginas: ["/", "/*"] };
+    expect(lerDestino("/blog/artigo", tudo)).toEqual({ href: "/blog/artigo", interna: true });
+    for (const mau of ["//exemplo.com", "/\\exemplo.com", "/\\/exemplo.com", "/blog\\..\\x", "///exemplo.com"]) {
+      expect(lerDestino(mau, tudo), mau).toBeNull();
+    }
+  });
 });
 
 describe("analisarLinha", () => {

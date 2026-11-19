@@ -49,6 +49,8 @@ const SO_A_RAIZ: OpcoesDaResposta = { paginas: ["/"] };
 export function destinoSeguro(bruto: string, opcoes: OpcoesDaResposta = SO_A_RAIZ): Destino | null {
   const href = bruto.trim();
   if (href.startsWith("/")) {
+    // «//host» e «/\host» parecem caminhos mas o navegador abre outro endereço (a barra invertida conta como «/»)
+    if (href.startsWith("//") || href.includes("\\")) return null;
     const [caminho] = href.split(/[#?]/);
     const resto = href.slice((caminho ?? "").length);
     const ok = paginaPermitida(caminho ?? "", opcoes.paginas) && /^([#?][A-Za-z0-9\-_=&.%/]*)?$/.test(resto);
